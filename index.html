@@ -7,117 +7,133 @@
   <title>jQuery Weather App</title>
   <link rel="stylesheet" href="assets/css/hotlinecss.css">
 </head>
-<body>
-  <noscript>Enable Javascript</noscript>
-  <div id="container" class="h-100vh flex flex-column items-center justify-center">
-    <p id="loading">Loading...</p>
-    <div id="iconContainer"></div>
-    <p id="currentWeatherInWords"></p>
-    <div id="temperature"></div>
-    <p id="currentLocation"></p>
+<body class="sans-serif">
+  <div id="container" class="h-100vh flex flex-column justify-center items-center">
+    <noscript class="font-bold light-red">Enable Javascript</noscript>
+    <div id="loading">Loading...</div>
+    <div id="imageContainer"></div>
+    <div id="temperatureContainer"></div>
+    <div id="cityContainer"></div>
   </div>
   <script src="assets/js/jquery-3.3.1.js"></script>
   <script>
-    $(document).ready(function () {
-      
-      var $loading = $('#loading');
-      var $container = $('#container');
-      var $currentWeatherInWords = $('#currentWeatherInWords');
-      var $iconContainer = $('#iconContainer');
-      var $currentLocation = $('#currentLocation');
-      var $temperature = $('#temperature');
-      var API_KEY = '5f8eef4029d7a333d7a327274d23b964';
+    $(function () {
 
-      function changeBackground (temperature) {
-        if (temperature > 30) {
-          $container.addClass('bg-red white');
+      var Weather = (function () {
+
+        var $loading = $('#loading');
+        var $container = $('#container');
+        var $imageContainer = $('#imageContainer');
+        var $temperatureContainer = $('#temperatureContainer');
+        var $cityContainer = $('#cityContainer');
+        var API_KEY = '5f8eef4029d7a333d7a327274d23b964';
+
+        var init = function () {
+          startAll();
+          console.log('Icons by Erik Flowers');
         }
-        if (temperature < 30 && temperature > 20) {
-          $container.addClass('bg-light-blue white');
+
+        var startAll = function () {
+          if ('geolocation' in navigator) {
+            navigator.geolocation.getCurrentPosition(success, error);
+          }
         }
-        if (temperature < 20) {
-          $container.addClass('bg-light-gray black-80')
+
+        var removeLoading = function () {
+          $loading.remove();
         }
-      }
 
-      function showTemperature (temperature) {
-        $temperature
-          .append(
-            $('</p>')
-              .attr({ class: 'font-bold' })
-              .text(temperature + ' ºC')
-          )
-      }
-      
-      function showCurrentWeatherInWords (word) {
-        $currentWeatherInWords.text(word);
-      }
+        var success = function (position) {
+          getTemperatureData(position);
+        }
 
-      function showIcon (element) {
-        $('<img />')
-          .attr({
-            class: 'h-6',
-            src: 'assets/icons/' + element.icon + '.svg', 
-            alt: element.description + ' [ICON]'
-          })
-          .appendTo($iconContainer);
-      }
-
-      function showCurrentLocation (currentLocation) {
-        $currentLocation.text(currentLocation);
-      }
-
-      function removeLoading () {
-        $loading.remove();
-      }
-
-      if ('geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition(success, error);
-      }
-
-      function success (position) {
-        $.ajax({
-          url: 'https://api.openweathermap.org/data/2.5/weather?lat=' + position.coords.latitude + '&lon=' + position.coords.longitude + '&units=metric' + '&APPID=' + API_KEY,
-          type: 'GET',
-          dataType: 'json'
-        })
-        .done(function(data) {
-          changeBackground(data.main.temp);
-          showTemperature(data.main.temp);
-          showCurrentWeatherInWords(data.weather[0].main);
-          showIcon(data.weather[0]);
-          showCurrentLocation(data.name);
+        var error = function (error) {
           removeLoading();
-        })
-        .fail(function(fail) {
-          console.log(fail);
-        })
-      }
-
-      function error (error) {
-        removeLoading();
-        $container.empty();
-        if (error.code === 1) {
-          $('</p>')
-            .attr({
-              class: 'font-bold black-80'
-            })
-            .text(error.message)
-            .appendTo($container.addClass('bg-gray-2'))
+          $container.empty();
+          if (error.code === 1) {
+            $('</p>')
+              .attr({ class: 'font-bold black-80' })
+              .text(error.message)
+              .appendTo($container.addClass('bg-gray-2'))
+          }
+          if (error.code === 2) {
+            $('</p>')
+              .attr({ class: 'font-bold white text-center' })
+              .text(error.message)
+              .appendTo($container.addClass('bg-light-red'))
+          }
         }
-        if (error.code === 2) {
-          $('</p>')
-            .attr({
-              class: 'font-bold white text-center'
-            })
-            .text(error.message)
-            .appendTo($container.addClass('bg-light-red'))
+        
+        var changeBackground = function (temperature) {
+          if (temperature >= 30) {
+            $container.addClass('bg-red white');
+          }
+          if (temperature <= 30 && temperature >= 20) {
+            $container.addClass('bg-light-blue white');
+          }
+          if (temperature < 20) {
+            $container.addClass('bg-light-gray')
+          }
         }
-      }
 
-      console.log('Icons by Erik Flowers');
+        var getTemperatureData = function (position) {
+          $.ajax({
+            url: 'https://api.openweathermap.org/data/2.5/weather?lat=' + position.coords.latitude + '&lon=' + position.coords.longitude + '&units=metric' + '&APPID=' + API_KEY,
+            method: 'GET',
+            dataType: 'json'
+          })
+          .done(function (response) {
+            $loading.show();
+            renderImage(response.weather[0]);
+            changeBackground(response.main.temp);
+            renderTemperature(response.main.temp);
+            renderCity(response.name);
+            removeLoading();
+          })
+          .fail(function (error) {
+            console.log(error);
+          })
+        }
 
-    });
+        var renderImage = function (element) {
+          $imageContainer
+            .append(
+              $('<img />')
+                .attr({ 
+                  class: 'h-6',
+                  src: 'assets/icons/' + element.icon + '.svg',
+                  alt: element.description + ' [ICON]'
+                })
+            )
+        }
+
+        var renderTemperature = function (temperature) {
+          $temperatureContainer
+            .append(
+              $('<h1>')
+                .attr({ class: 'font-1 mt2 mb1' })
+                .text(temperature + ' ºC')
+            )
+        }
+
+        var renderCity = function (city) {
+          $cityContainer
+            .append(
+              $('</p>')
+                .attr({ class: 'tracked text-uppercase' })
+                .text(city)
+            )
+        }
+
+        return {
+          init: init
+        };
+
+      })();
+
+      Weather.init();
+
+    })
   </script>
 </body>
 </html>
