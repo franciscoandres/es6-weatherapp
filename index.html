@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <link rel="stylesheet" href="assets/css/hotlinecss.css">
+</head>
+<body>
+  <div id="container" class="h-100vh flex flex-column items-center justify-center">
+    <p id="loading">Loading...</p>
+    <div id="iconContainer"></div>
+    <p id="currentWeatherInWords"></p>
+    <div id="temperature"></div>
+    <p id="currentLocation"></p>
+  </div>
+  <script src="assets/js/jquery-3.3.1.js"></script>
+  <script>
+    $(document).ready(function () {
+      
+      var $loading = $('#loading');
+      var $container = $('#container');
+      var $currentWeatherInWords = $('#currentWeatherInWords');
+      var $iconContainer = $('#iconContainer');
+      var $currentLocation = $('#currentLocation');
+      var $temperature = $('#temperature');
+      var API_KEY = '5f8eef4029d7a333d7a327274d23b964';
+
+      function changeBackground (temperature) {
+        if (temperature > 30) {
+          $container.addClass('bg-red white');
+        }
+        if (temperature < 30 && temperature > 20) {
+          $container.addClass('bg-light-blue white');
+        }
+        if (temperature < 20) {
+          $container.addClass('bg-light-gray black-80')
+        }
+      }
+
+      function showTemperature (temperature) {
+        $temperature
+          .append(
+            $('</p>')
+              .attr({ class: 'font-bold' })
+              .text(temperature + ' ºC')
+          )
+      }
+      
+      function showCurrentWeatherInWords (word) {
+        $currentWeatherInWords.text(word);
+      }
+
+      function showIcon (element) {
+        $('<img />')
+          .attr({
+            class: 'h-6',
+            src: 'assets/icons/' + element.icon + '.svg', 
+            alt: element.description + ' [ICON]'
+          })
+          .appendTo($iconContainer);
+      }
+
+      function showCurrentLocation (currentLocation) {
+        $currentLocation.text(currentLocation);
+      }
+
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(success, error);
+      }
+
+      function success (position) {
+        $.ajax({
+          url: 'https://api.openweathermap.org/data/2.5/weather?lat=' + position.coords.latitude + '&lon=' + position.coords.longitude + '&units=metric' + '&APPID=' + API_KEY,
+          type: 'GET',
+          dataType: 'json'
+        })
+        .done(function(data) {
+          changeBackground(data.main.temp);
+          showTemperature(data.main.temp);
+          showCurrentWeatherInWords(data.weather[0].main);
+          showIcon(data.weather[0]);
+          showCurrentLocation(data.name);
+          $loading.remove();
+        })
+        .fail(function(fail) {
+          console.log(fail);
+        })
+      }
+
+      function error (error) {
+        console.log(error)
+        if (error.code === 1) {
+          $container.append([
+            '<div class="h-100vh flex justify-center items-center pa2 font-bold text-center bg-gray-2 black-80">',
+              error.message,
+            '</div>'
+          ].join(''))
+        }
+        if (error.code === 2) {
+          $container.append([
+            '<div class="h-100vh flex justify-center items-center pa2 font-bold text-center bg-light-red white">',
+              error.message,
+            '</div>'
+          ].join(''))
+        }
+      }
+
+      console.log('Icons by Erik Flowers');
+
+    });
+  </script>
+</body>
+</html>
