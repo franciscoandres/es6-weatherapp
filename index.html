@@ -16,7 +16,7 @@
 
   <script id="image" type="text/x-handlebars-template">
     <div>
-      <img src="assets/icons/{{ data.weather.0.icon }}.svg" alt="{{ data.description }}" class="h-4" />
+      <img src="assets/icons/{{ data.weather.0.icon }}.svg" alt="{{ data.weather.0.description }}" class="h-4" />
     </div>
   </script>
 
@@ -38,6 +38,38 @@
 
 
   <script>
+
+    var Background = (function () {
+
+      var DOM = {};
+
+      function cacheDOM () {
+        DOM.$body = $('body');
+      }
+
+      function changeColor (response) {
+        if (response.main.temp >= 30) {
+          DOM.$body.addClass('bg-red white');
+        }
+        if (response.main.temp <= 30 && response.main.temp >= 20) {
+          DOM.$body.addClass('bg-light-blue white');
+        }
+        if (response.main.temp < 20) {
+          DOM.$body.addClass('bg-light-gray');
+        }
+        DOM.$body.addClass('bg-white');
+      }
+
+      function init () {
+        cacheDOM();
+      }
+
+      return {
+        changeColor: changeColor,
+        init: init
+      }
+
+    })();
 
     var Weather = (function () {
 
@@ -112,24 +144,11 @@
         DOM.$app.append(DOM.$image({ data: response }));
       }
 
-      function handleBackground (response) {
-        if (response.main.temp >= 30) {
-          DOM.$body.addClass('bg-red white');
-        }
-        if (response.main.temp <= 30 && response.main.temp >= 20) {
-          DOM.$body.addClass('bg-light-blue white');
-        }
-        if (response.main.temp < 20) {
-          DOM.$body.addClass('bg-light-gray');
-        }
-        DOM.$body.addClass('bg-white');
-      }
-
       function render (response) {
         var data = response;
         renderImage(data);
         renderInformation(data);
-        handleBackground(data);
+        Background.changeColor(data);
       }
 
       function init () {
@@ -146,6 +165,7 @@
 
     (function () {
 
+      Background.init();
       Weather.init();
 
     })();
