@@ -1,2 +1,2 @@
-# jquery-weatherapp
-jquery-weatherapp
+# es6-weatherapp
+es6-weatherapp

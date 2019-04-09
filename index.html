@@ -4,172 +4,61 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>jQuery Weather App</title>
-  <link rel="stylesheet" href="assets/css/hotlinecss.css">
+  <title>Weather App with ES6</title>
+  <style>
+    html {
+      box-sizing: border-box;
+    }
+
+    *, *:before, *:after {
+      box-sizing: inherit;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .image {
+      height: 8rem;
+    }
+    .temperature {
+      font-size: 2.5rem;
+      margin-top: 1rem;
+      margin-bottom: .5rem;
+    }
+    .city {
+      letter-spacing: .5rem;
+      text-transform: uppercase;
+    }
+
+    .hell {
+      background-image: linear-gradient(to bottom, #f73535 40%, #fee140 100%);
+    }
+
+    .hot {
+      background-image: linear-gradient(to right, #ed6ea0 0%, #ec8c69 100%);
+    }
+
+    .nice {
+      background-image: linear-gradient(to bottom, #4facfe 62%, #00f2fe 100%);
+      color: #fff;
+    }
+
+    .cold {
+      background-image: linear-gradient(to bottom, #f5f7fa 0%, #c3cfe2 100%);
+    }
+  </style>
 </head>
 <body class="sans-serif">
-  
-  <div id="app" class="flex flex-column justify-center items-center h-100vh"></div>
-
-  <script src="assets/js/jquery-3.3.1.js"></script>
-  <script src="assets/js/handlebars.min.js"></script>
-
-  <script id="image" type="text/x-handlebars-template">
-    <div>
-      <img src="assets/icons/{{ data.weather.0.icon }}.svg" alt="{{ data.weather.0.description }}" class="h-4" />
-    </div>
-  </script>
-
-  <script id="information" type="text/x-handlebars-template">
-    <div>
-      <h1 class="font-1 mt3 mb2">{{ data.main.temp }} ºC</h1>
-    </div>
-    <div>
-      <p class="tracked text-uppercase">{{ data.name }}</p>
-    </div>
-  </script>
-
-  <script id="error" type="text/x-handlebars-template">
-    <div class="bg-{{ data.class }} pv2 ph4 radius-2 box-shadow-3">
-      <h3 class="white">{{ data.title }}</h3>
-      <p class="white">{{ data.message }}</p>
-    </div>
-  </script>
-
-
-  <script>
-
-    var Background = (function () {
-
-      var DOM = {};
-
-      function cacheDOM () {
-        DOM.$body = $('body');
-      }
-
-      function changeColor (response) {
-        if (response.main.temp >= 30) {
-          DOM.$body.addClass('bg-red white');
-        }
-        if (response.main.temp <= 30 && response.main.temp >= 20) {
-          DOM.$body.addClass('bg-light-blue white');
-        }
-        if (response.main.temp < 20) {
-          DOM.$body.addClass('bg-light-gray');
-        }
-        DOM.$body.addClass('bg-white');
-      }
-
-      function init () {
-        cacheDOM();
-      }
-
-      return {
-        changeColor: changeColor,
-        init: init
-      }
-
-    })();
-
-    var Weather = (function () {
-
-      var DOM = {};
-      var API_KEY = '5f8eef4029d7a333d7a327274d23b964';
-
-      function cacheDOM () {
-        DOM.$app         = $('#app');
-        DOM.$body        = $('body');
-        DOM.$loading     = $('</p>').text('Loading...');
-        DOM.$image       = Handlebars.compile($('#image').html());
-        DOM.$information = Handlebars.compile($('#information').html());
-        DOM.$error       = Handlebars.compile($('#error').html());
-      }
-
-      function handleAjax () {
-        $(document).ajaxStart(function () {
-          DOM.$app.append(DOM.$loading);
-        });
-
-        $(document).ajaxComplete(function () {
-          DOM.$loading.remove();
-        });
-      }
-
-      function makeRequest (position) {
-        var api = {
-          url: 'https://api.openweathermap.org/data/2.5/weather?lat=' + position.coords.latitude + '&lon=' + position.coords.longitude + '&units=metric' + '&APPID=' + API_KEY,
-          method: 'GET',
-          dataType: 'json'
-        }
-        return $.ajax(api);
-      }
-
-      function getPosition () {
-        if ('geolocation' in navigator) {
-          navigator.geolocation.getCurrentPosition(handleSuccess, handleError);
-        }
-      }
-
-      function handleSuccess (position) {
-        makeRequest(position)
-          .done(function (response) {
-            render(response);
-          })
-          .fail(function (error) {
-            console.log(error);
-          })
-      }
-
-      function handleError (error) {
-        var data = {};
-        if (error.code === 1) {
-          data.class = 'red';
-          data.title = error.message;
-          data.message = 'Weather App needs permissions to your location';
-        }
-        if (error.code === 2) {
-          data.class = 'orange';
-          data.title = error.message;
-          data.message = 'Geolocation failed because at least one internal source of position returned an internal error.';
-        }
-        DOM.$body.addClass('bg-light-gray');
-        DOM.$app.append(DOM.$error({ data: data }))
-      }
-
-      function renderInformation (response) {
-        DOM.$app.append(DOM.$information({ data: response }));
-      }
-
-      function renderImage (response) {
-        DOM.$app.append(DOM.$image({ data: response }));
-      }
-
-      function render (response) {
-        var data = response;
-        renderImage(data);
-        renderInformation(data);
-        Background.changeColor(data);
-      }
-
-      function init () {
-        cacheDOM();
-        getPosition();
-        handleAjax();
-      }
-
-      return {
-        init: init
-      }
-
-    })();
-
-    (function () {
-
-      Background.init();
-      Weather.init();
-
-    })();
-
-  </script>
+  <div id="app" class="container"></div>
+  <script async src="assets/js/scripts.js"></script>
 </body>
 </html>
